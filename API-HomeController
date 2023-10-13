@@ -1,0 +1,102 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NBIClearanceAPI.Models;
+using Microsoft.AspNetCore.Http;
+
+
+namespace NBIClearanceAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class HomeController : ControllerBase
+    {
+        private readonly ApplicantDbContext _context;
+
+        public HomeController(ApplicantDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Applicants
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Applicant>>> GetApplicants()
+        {
+            return await _context.Applicant.ToListAsync();
+        }
+
+        // GET: api/Applicants/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Applicant>> GetApplicant(int id)
+        {
+            var applicant = await _context.Applicant.FindAsync(id);
+
+            if (applicant == null)
+            {
+                return NotFound();
+            }
+
+            return applicant;
+        }
+
+        //POST: api/CombinedData
+        [HttpPost]
+        public async Task<ActionResult<Applicant>> PostApplicant(Applicant applicant)
+        {
+            _context.Applicant.Add(applicant);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetApplicant", new { id = applicant.ApplicantId }, applicant);
+        }
+
+        //PUT: api/CombinedData/id
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutApplicant(int id, Applicant applicant)
+        {
+            if (id != applicant.ApplicantId)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(applicant).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ApplicantExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+
+            }
+
+            return NoContent();
+        }
+
+        //DELETE
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteApplicant(int id)
+        {
+            var applicant = await _context.Applicant.FindAsync(id);
+            if (applicant == null)
+            {
+                return NotFound();
+            }
+
+            _context.Applicant.Remove(applicant);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool ApplicantExists(int id)
+        {
+            return _context.Applicant.Any(e => e.ApplicantId == id);
+        }
+    }
+}
